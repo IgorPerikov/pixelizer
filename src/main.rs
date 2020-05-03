@@ -9,8 +9,8 @@ fn main() {
     match pixelize(&mut input_image, tile_size) {
         Err(_) => panic!(
             "Validation error: {}x{} image cannot be pixelized into tiles of size {}",
-            input_image.height(),
             input_image.width(),
+            input_image.height(),
             tile_size
         ),
         _ => {}
