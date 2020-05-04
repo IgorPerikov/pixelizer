@@ -41,35 +41,35 @@ mod validation_tests {
 
     #[test]
     fn perfectly_divisible_square_image_should_be_ok() {
-        let image = DynamicImage::new_rgb8(DIVISIBLE_DIMENSION, DIVISIBLE_DIMENSION);
+        let image = DynamicImage::new_rgba8(DIVISIBLE_DIMENSION, DIVISIBLE_DIMENSION);
         let error_option = validate(&image, TILE_SIZE);
         assert!(error_option.is_none());
     }
 
     #[test]
     fn divisible_non_square_image_should_be_ok() {
-        let image = DynamicImage::new_rgb8(DIVISIBLE_DIMENSION, DIVISIBLE_DIMENSION * 2);
+        let image = DynamicImage::new_rgba8(DIVISIBLE_DIMENSION, DIVISIBLE_DIMENSION * 2);
         let error_option = validate(&image, TILE_SIZE);
         assert!(error_option.is_none());
     }
 
     #[test]
     fn non_divisible_by_width_image_should_return_error() {
-        let image = DynamicImage::new_rgb8(NON_DIVISIBLE_DIMENSION, DIVISIBLE_DIMENSION);
+        let image = DynamicImage::new_rgba8(NON_DIVISIBLE_DIMENSION, DIVISIBLE_DIMENSION);
         let error_option = validate(&image, TILE_SIZE);
         assert!(error_option.is_some());
     }
 
     #[test]
     fn non_divisible_by_height_image_should_return_error() {
-        let image = DynamicImage::new_rgb8(DIVISIBLE_DIMENSION, NON_DIVISIBLE_DIMENSION);
+        let image = DynamicImage::new_rgba8(DIVISIBLE_DIMENSION, NON_DIVISIBLE_DIMENSION);
         let error_option = validate(&image, TILE_SIZE);
         assert!(error_option.is_some());
     }
 
     #[test]
     fn non_divisible_by_width_and_height_image_should_return_error() {
-        let image = DynamicImage::new_rgb8(NON_DIVISIBLE_DIMENSION, NON_DIVISIBLE_DIMENSION);
+        let image = DynamicImage::new_rgba8(NON_DIVISIBLE_DIMENSION, NON_DIVISIBLE_DIMENSION);
         let error_option = validate(&image, TILE_SIZE);
         assert!(error_option.is_some());
     }
