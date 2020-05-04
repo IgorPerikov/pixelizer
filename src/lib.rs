@@ -3,35 +3,53 @@ use std::ops::Range;
 
 // TODO: tests
 // TODO: consider functional approaches where possible
+// TODO: come to a single naming policy - tile or segment, not both
 
 pub fn pixelize(image: &mut DynamicImage, tile_size: u32) -> Result<(), ValidationError> {
-    if (image.width() % tile_size != 0) || (image.height() % tile_size != 0) {
-        return Result::Err(ValidationError::image_cant_be_segmented(
-            image.width(),
-            image.height(),
-            tile_size,
-        ));
-    }
-    pixelize_no_validation(image, tile_size);
-    Result::Ok(())
+    return match validate(image, tile_size) {
+        Some(e) => Result::Err(e),
+        None => {
+            pixelize_no_validation(image, tile_size);
+            Result::Ok(())
+        }
+    };
 }
 
 fn pixelize_no_validation(input: &mut DynamicImage, tile_size: u32) {
+    for segment in split_image_by_segments(input, tile_size) {
+        pixelize_segment(input, segment);
+    }
+}
+
+fn split_image_by_segments(input: &DynamicImage, tile_size: u32) -> Vec<ImageSegmentIterator> {
+    let mut segments = Vec::new();
     for column_segment_number in 0..(input.width() / tile_size) {
         for row_segment_number in 0..(input.height() / tile_size) {
-            let image_segment_iterator = ImageSegmentIterator {
+            segments.push(ImageSegmentIterator {
                 column_segment_number,
                 row_segment_number,
                 segment_size: tile_size,
-            };
-            pixelize_segment(input, &image_segment_iterator);
+            });
         }
+    }
+    segments
+}
+
+fn validate(image: &DynamicImage, tile_size: u32) -> Option<ValidationError> {
+    if (image.width() % tile_size != 0) || (image.height() % tile_size != 0) {
+        Option::Some(ValidationError::image_cant_be_segmented(
+            image.width(),
+            image.height(),
+            tile_size,
+        ))
+    } else {
+        Option::None
     }
 }
 
 // TODO: can be launched in parallel
-fn pixelize_segment(image: &mut DynamicImage, image_segment_iterator: &ImageSegmentIterator) {
-    let rgba = calc_average_rgba_pixel(image, image_segment_iterator);
+fn pixelize_segment(image: &mut DynamicImage, image_segment_iterator: ImageSegmentIterator) {
+    let rgba = calc_average_rgba_pixel(image, &image_segment_iterator);
     for point in image_segment_iterator.get_points() {
         image.put_pixel(point.x, point.y, rgba);
     }
@@ -97,7 +115,7 @@ impl ImageSegmentIterator {
 
 struct Point {
     x: u32,
-    y: u32
+    y: u32,
 }
 
 #[derive(Debug)]
