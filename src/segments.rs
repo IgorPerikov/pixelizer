@@ -9,8 +9,8 @@ pub struct ImageSegmentIterator {
 impl ImageSegmentIterator {
     pub fn get_points(&self) -> Vec<Point> {
         let mut elements = Vec::new();
-        for column in self.get_columns() {
-            for row in self.get_rows() {
+        for row in self.get_rows() {
+            for column in self.get_columns() {
                 elements.push(Point { x: column, y: row });
             }
         }
@@ -40,7 +40,26 @@ impl ImageSegmentIterator {
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Point {
     pub x: u32,
     pub y: u32,
+}
+
+#[cfg(test)]
+mod segments_generation_tests {
+    use super::*;
+
+    #[test]
+    fn should_return_all_points_of_segment() {
+        let segment_iterator = ImageSegmentIterator::create(2, 2, 3);
+        assert_eq!(
+            vec![
+                Point{x: 6, y: 6}, Point{x: 7, y: 6}, Point{x: 8, y: 6},
+                Point{x: 6, y: 7}, Point{x: 7, y: 7}, Point{x: 8, y: 7},
+                Point{x: 6, y: 8}, Point{x: 7, y: 8}, Point{x: 8, y: 8}
+            ],
+            segment_iterator.get_points()
+        );
+    }
 }
