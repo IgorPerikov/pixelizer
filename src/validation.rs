@@ -77,7 +77,10 @@ mod validation_tests {
     #[test]
     fn calling_panic_on_validation_error_should_panic() {
         let result = std::panic::catch_unwind(|| {
-            ValidationError { error: String::from("error message") }.panic();
+            ValidationError {
+                error: String::from("error message"),
+            }
+            .panic();
         });
         assert!(result.is_err());
     }

@@ -1,4 +1,4 @@
-use crate::segments::ImageSegmentIterator;
+use crate::segments::{split_image_by_segments, ImageSegmentIterator};
 use crate::validation::{validate, ValidationError};
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 
@@ -23,20 +23,6 @@ fn pixelize_no_validation(input: &mut DynamicImage, tile_size: u32) {
     for segment in split_image_by_segments(input, tile_size) {
         pixelize_segment(input, segment);
     }
-}
-
-fn split_image_by_segments(input: &DynamicImage, tile_size: u32) -> Vec<ImageSegmentIterator> {
-    let mut segments = Vec::new();
-    for column_segment_number in 0..(input.width() / tile_size) {
-        for row_segment_number in 0..(input.height() / tile_size) {
-            segments.push(ImageSegmentIterator::create(
-                column_segment_number,
-                row_segment_number,
-                tile_size,
-            ));
-        }
-    }
-    segments
 }
 
 // TODO: can be launched in parallel
