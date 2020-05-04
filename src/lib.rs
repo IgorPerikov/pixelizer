@@ -2,25 +2,26 @@ use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 use std::ops::Range;
 
 // TODO: tests
+// TODO: consider functional approaches where possible
 
-pub fn pixelize(input: &mut DynamicImage, tile_size: u32) -> Result<(), ValidationError> {
-    if (input.width() % tile_size != 0) || (input.height() % tile_size != 0) {
+pub fn pixelize(image: &mut DynamicImage, tile_size: u32) -> Result<(), ValidationError> {
+    if (image.width() % tile_size != 0) || (image.height() % tile_size != 0) {
         return Result::Err(ValidationError::image_cant_be_segmented(
-            input.width(),
-            input.height(),
+            image.width(),
+            image.height(),
             tile_size,
         ));
     }
-    pixelize_no_validation(input, tile_size);
-    return Result::Ok(());
+    pixelize_no_validation(image, tile_size);
+    Result::Ok(())
 }
 
 fn pixelize_no_validation(input: &mut DynamicImage, tile_size: u32) {
-    for row_segment_number in 0..(input.height() / tile_size) {
-        for column_segment_number in 0..(input.width() / tile_size) {
+    for column_segment_number in 0..(input.width() / tile_size) {
+        for row_segment_number in 0..(input.height() / tile_size) {
             let image_segment_iterator = ImageSegmentIterator {
-                row_segment_number,
                 column_segment_number,
+                row_segment_number,
                 segment_size: tile_size,
             };
             pixelize_segment(input, &image_segment_iterator);
@@ -29,15 +30,15 @@ fn pixelize_no_validation(input: &mut DynamicImage, tile_size: u32) {
 }
 
 // TODO: can be launched in parallel
-fn pixelize_segment(input: &mut DynamicImage, image_segment_iterator: &ImageSegmentIterator) {
-    let rgba = calc_average_rgba_pixel(input, image_segment_iterator);
-    for (row, column) in image_segment_iterator.get_elements() {
-        input.put_pixel(row, column, rgba);
+fn pixelize_segment(image: &mut DynamicImage, image_segment_iterator: &ImageSegmentIterator) {
+    let rgba = calc_average_rgba_pixel(image, image_segment_iterator);
+    for point in image_segment_iterator.get_points() {
+        image.put_pixel(point.x, point.y, rgba);
     }
 }
 
 fn calc_average_rgba_pixel(
-    input: &mut DynamicImage,
+    image: &mut DynamicImage,
     image_segment_iterator: &ImageSegmentIterator,
 ) -> Rgba<u8> {
     let mut sum_red: u64 = 0;
@@ -45,53 +46,58 @@ fn calc_average_rgba_pixel(
     let mut sum_blue: u64 = 0;
     let mut sum_alpha: u64 = 0;
 
-    let elements = image_segment_iterator.get_elements();
+    let points = image_segment_iterator.get_points();
 
-    for (row, column) in &elements {
-        let rgba_content = input.get_pixel(*row, *column).0;
+    for point in &points {
+        let rgba_content = image.get_pixel(point.x, point.y).0;
         sum_red += rgba_content[0] as u64;
         sum_green += rgba_content[1] as u64;
         sum_blue += rgba_content[2] as u64;
         sum_alpha += rgba_content[3] as u64;
     }
 
-    let total_pixels = elements.len() as u64;
+    let total_pixels = points.len() as u64;
 
-    return Rgba([
+    Rgba([
         (sum_red / total_pixels) as u8,
         (sum_green / total_pixels) as u8,
         (sum_blue / total_pixels) as u8,
         (sum_alpha / total_pixels) as u8,
-    ]);
+    ])
 }
 
 // TODO: encapsulate get_columns/get_rows/struct fields by moving out of lib.rs
 struct ImageSegmentIterator {
-    row_segment_number: u32,
     column_segment_number: u32,
+    row_segment_number: u32,
     segment_size: u32,
 }
 
 impl ImageSegmentIterator {
-    fn get_elements(&self) -> Vec<(u32, u32)> {
+    fn get_points(&self) -> Vec<Point> {
         let mut elements = Vec::new();
-        for row in self.get_rows() {
-            for column in self.get_columns() {
-                elements.push((row, column));
+        for column in self.get_columns() {
+            for row in self.get_rows() {
+                elements.push(Point { x: column, y: row });
             }
         }
-        return elements;
+        elements
     }
 
     fn get_columns(&self) -> Range<u32> {
         let start_column = self.column_segment_number * self.segment_size;
-        return start_column..(start_column + self.segment_size);
+        start_column..(start_column + self.segment_size)
     }
 
     fn get_rows(&self) -> Range<u32> {
         let start_row = self.row_segment_number * self.segment_size;
-        return start_row..(start_row + self.segment_size);
+        start_row..(start_row + self.segment_size)
     }
+}
+
+struct Point {
+    x: u32,
+    y: u32
 }
 
 #[derive(Debug)]
