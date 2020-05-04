@@ -1,11 +1,11 @@
 use crate::segments::{split_image_by_segments, ImageSegmentIterator};
 use crate::validation::{validate, ValidationError};
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
+use itertools::Itertools;
 
 mod segments;
 mod validation;
 
-// TODO: tests
 // TODO: consider functional approaches where possible
 // TODO: come to a single naming policy - tile or segment, not both
 
@@ -21,38 +21,45 @@ pub fn pixelize(image: &mut DynamicImage, tile_size: u32) -> Result<(), Validati
 
 fn pixelize_no_validation(input: &mut DynamicImage, tile_size: u32) {
     for segment in split_image_by_segments(input, tile_size) {
-        pixelize_segment(input, segment);
+        pixelize_segment(input, &segment);
     }
 }
 
 // TODO: can be launched in parallel
-fn pixelize_segment(image: &mut DynamicImage, image_segment_iterator: ImageSegmentIterator) {
-    let rgba = calc_average_rgba_pixel(image, &image_segment_iterator);
+fn pixelize_segment(image: &mut DynamicImage, image_segment_iterator: &ImageSegmentIterator) {
+    let segment_pixels = get_pixels(image, image_segment_iterator);
+    let average_pixel = calc_average_rgba_pixel(segment_pixels);
     for point in image_segment_iterator.get_points() {
-        image.put_pixel(point.x, point.y, rgba);
+        image.put_pixel(point.x, point.y, average_pixel);
     }
 }
 
-fn calc_average_rgba_pixel(
-    image: &mut DynamicImage,
+fn get_pixels(
+    image: &DynamicImage,
     image_segment_iterator: &ImageSegmentIterator,
-) -> Rgba<u8> {
+) -> Vec<Rgba<u8>> {
+    return image_segment_iterator
+        .get_points()
+        .iter()
+        .map(|point| image.get_pixel(point.x, point.y))
+        .collect_vec();
+}
+
+fn calc_average_rgba_pixel(segment_pixels: Vec<Rgba<u8>>) -> Rgba<u8> {
     let mut sum_red: u64 = 0;
     let mut sum_green: u64 = 0;
     let mut sum_blue: u64 = 0;
     let mut sum_alpha: u64 = 0;
 
-    let points = image_segment_iterator.get_points();
+    let total_pixels = segment_pixels.len() as u64;
 
-    for point in &points {
-        let rgba_content = image.get_pixel(point.x, point.y).0;
+    for pixel in segment_pixels {
+        let rgba_content = pixel.0;
         sum_red += rgba_content[0] as u64;
         sum_green += rgba_content[1] as u64;
         sum_blue += rgba_content[2] as u64;
         sum_alpha += rgba_content[3] as u64;
     }
-
-    let total_pixels = points.len() as u64;
 
     Rgba([
         (sum_red / total_pixels) as u8,
@@ -60,4 +67,21 @@ fn calc_average_rgba_pixel(
         (sum_blue / total_pixels) as u8,
         (sum_alpha / total_pixels) as u8,
     ])
+}
+
+#[cfg(test)]
+mod average_pixel_test {
+    use super::*;
+
+    #[test]
+    fn average_pixel_should_consider_all_colors_and_alpha_channel() {
+        let average_rgba_pixel = calc_average_rgba_pixel(vec![
+            Rgba([100, 100, 100, 100]),
+            Rgba([75, 75, 75, 75]),
+            Rgba([50, 50, 50, 50]),
+            Rgba([25, 25, 25, 25]),
+            Rgba([0, 0, 0, 0]),
+        ]);
+        assert_eq!(Rgba([50, 50, 50, 50]), average_rgba_pixel);
+    }
 }
