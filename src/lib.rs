@@ -76,12 +76,11 @@ mod average_pixel_test {
     #[test]
     fn average_pixel_should_consider_all_colors_and_alpha_channel() {
         let average_rgba_pixel = calc_average_rgba_pixel(vec![
-            Rgba([100, 100, 100, 100]),
-            Rgba([75, 75, 75, 75]),
-            Rgba([50, 50, 50, 50]),
-            Rgba([25, 25, 25, 25]),
-            Rgba([0, 0, 0, 0]),
+            Rgba([130, 85, 60, 0]),
+            Rgba([110, 80, 50, 10]),
+            Rgba([90, 70, 50, 40]),
+            Rgba([70, 65, 40, 50]),
         ]);
-        assert_eq!(Rgba([50, 50, 50, 50]), average_rgba_pixel);
+        assert_eq!(Rgba([100, 75, 50, 25]), average_rgba_pixel);
     }
 }
