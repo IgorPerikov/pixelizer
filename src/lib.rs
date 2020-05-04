@@ -1,5 +1,9 @@
+use crate::segments::ImageSegmentIterator;
+use crate::validation::{validate, ValidationError};
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
-use std::ops::Range;
+
+mod segments;
+mod validation;
 
 // TODO: tests
 // TODO: consider functional approaches where possible
@@ -25,26 +29,14 @@ fn split_image_by_segments(input: &DynamicImage, tile_size: u32) -> Vec<ImageSeg
     let mut segments = Vec::new();
     for column_segment_number in 0..(input.width() / tile_size) {
         for row_segment_number in 0..(input.height() / tile_size) {
-            segments.push(ImageSegmentIterator {
+            segments.push(ImageSegmentIterator::create(
                 column_segment_number,
                 row_segment_number,
-                segment_size: tile_size,
-            });
+                tile_size,
+            ));
         }
     }
     segments
-}
-
-fn validate(image: &DynamicImage, tile_size: u32) -> Option<ValidationError> {
-    if (image.width() % tile_size != 0) || (image.height() % tile_size != 0) {
-        Option::Some(ValidationError::image_cant_be_segmented(
-            image.width(),
-            image.height(),
-            tile_size,
-        ))
-    } else {
-        Option::None
-    }
 }
 
 // TODO: can be launched in parallel
@@ -82,58 +74,4 @@ fn calc_average_rgba_pixel(
         (sum_blue / total_pixels) as u8,
         (sum_alpha / total_pixels) as u8,
     ])
-}
-
-// TODO: encapsulate get_columns/get_rows/struct fields by moving out of lib.rs
-struct ImageSegmentIterator {
-    column_segment_number: u32,
-    row_segment_number: u32,
-    segment_size: u32,
-}
-
-impl ImageSegmentIterator {
-    fn get_points(&self) -> Vec<Point> {
-        let mut elements = Vec::new();
-        for column in self.get_columns() {
-            for row in self.get_rows() {
-                elements.push(Point { x: column, y: row });
-            }
-        }
-        elements
-    }
-
-    fn get_columns(&self) -> Range<u32> {
-        let start_column = self.column_segment_number * self.segment_size;
-        start_column..(start_column + self.segment_size)
-    }
-
-    fn get_rows(&self) -> Range<u32> {
-        let start_row = self.row_segment_number * self.segment_size;
-        start_row..(start_row + self.segment_size)
-    }
-}
-
-struct Point {
-    x: u32,
-    y: u32,
-}
-
-#[derive(Debug)]
-pub struct ValidationError {
-    error: String,
-}
-
-impl ValidationError {
-    pub fn image_cant_be_segmented(width: u32, height: u32, tile_size: u32) -> ValidationError {
-        ValidationError {
-            error: format!(
-                "{}x{} image cannot be segmented into tiles of size {}",
-                width, height, tile_size
-            ),
-        }
-    }
-
-    pub fn panic(&self) {
-        panic!("Validation failed: {}", self.error);
-    }
 }
