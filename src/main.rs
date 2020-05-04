@@ -7,12 +7,7 @@ fn main() {
     let mut input_image = image::open("avatar.jpeg").unwrap();
     let tile_size = 5;
     match pixelize(&mut input_image, tile_size) {
-        Err(_) => panic!(
-            "Validation error: {}x{} image cannot be pixelized into tiles of size {}",
-            input_image.width(),
-            input_image.height(),
-            tile_size
-        ),
+        Err(e) => e.panic(),
         _ => {}
     };
     input_image.save("result.jpeg").unwrap();

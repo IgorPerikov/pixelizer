@@ -4,7 +4,11 @@ use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 
 pub fn pixelize(input: &mut DynamicImage, tile_size: u32) -> Result<(), ValidationError> {
     if (input.width() % tile_size != 0) || (input.height() % tile_size != 0) {
-        return Result::Err(ValidationError);
+        return Result::Err(ValidationError::image_cant_be_segmented(
+            input.width(),
+            input.height(),
+            tile_size,
+        ));
     }
     pixelize_no_validation(input, tile_size);
     return Result::Ok(());
@@ -68,4 +72,23 @@ fn calc_average_rgba_pixel(
 }
 
 #[derive(Debug)]
-pub struct ValidationError; // TODO: populate with error details
+pub struct ValidationError {
+    error: String,
+}
+
+impl ValidationError {
+    pub fn image_cant_be_segmented(width: u32, height: u32, tile_size: u32) -> ValidationError {
+        ValidationError {
+            error: format!(
+                "{}x{} image cannot be segmented into tiles of size {}",
+                width,
+                height,
+                tile_size
+            ),
+        }
+    }
+
+    pub fn panic(&self) {
+        panic!("Validation failed: {}", self.error);
+    }
+}
