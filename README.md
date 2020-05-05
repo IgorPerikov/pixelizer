@@ -1,8 +1,8 @@
 pixelizer
 ---
-Pixelize image with given tile size
+Pixelize image with given segment size
 
-Image pixelization with tile size=5
+Image pixelization with segment size=5
 
 <img src="/docs/input.jpeg"/>
 

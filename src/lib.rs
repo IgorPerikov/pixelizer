@@ -2,30 +2,29 @@ use crate::segments::{split_image_by_segments, ImageSegmentIterator};
 use crate::validation::{validate, ValidationError};
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 use itertools::Itertools;
+use rayon::prelude::IntoParallelRefIterator;
 
 mod segments;
 mod validation;
 
 // TODO: consider functional approaches where possible
-// TODO: come to a single naming policy - tile or segment, not both
 
-pub fn pixelize(image: &mut DynamicImage, tile_size: u32) -> Result<(), ValidationError> {
-    return match validate(image, tile_size) {
+pub fn pixelize(image: &mut DynamicImage, segment_size: u32) -> Result<(), ValidationError> {
+    return match validate(image, segment_size) {
         Some(e) => Result::Err(e),
         None => {
-            pixelize_no_validation(image, tile_size);
+            pixelize_no_validation(image, segment_size);
             Result::Ok(())
         }
     };
 }
 
-fn pixelize_no_validation(input: &mut DynamicImage, tile_size: u32) {
-    for segment in split_image_by_segments(input, tile_size) {
+fn pixelize_no_validation(input: &mut DynamicImage, segment_size: u32) {
+    for segment in split_image_by_segments(input, segment_size) {
         pixelize_segment(input, &segment);
     }
 }
 
-// TODO: can be launched in parallel
 fn pixelize_segment(image: &mut DynamicImage, image_segment_iterator: &ImageSegmentIterator) {
     let segment_pixels = get_pixels(image, image_segment_iterator);
     let average_pixel = calc_average_rgba_pixel(segment_pixels);

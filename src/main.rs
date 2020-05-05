@@ -4,8 +4,8 @@ use pixelizer::pixelize;
 // TODO: consider pixelizing even if it's not perfectly divisible
 fn main() {
     let mut input_image = image::open("avatar.jpeg").unwrap();
-    let tile_size = 20;
-    match pixelize(&mut input_image, tile_size) {
+    let segment_size = 20;
+    match pixelize(&mut input_image, segment_size) {
         Err(e) => e.panic(),
         _ => {}
     };
