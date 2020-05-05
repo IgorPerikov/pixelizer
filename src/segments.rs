@@ -8,7 +8,10 @@ pub struct ImageSegmentIterator {
     segment_size: u32,
 }
 
-pub fn split_image_by_segments(input: &DynamicImage, segment_size: u32) -> Vec<ImageSegmentIterator> {
+pub fn split_image_by_segments(
+    input: &DynamicImage,
+    segment_size: u32,
+) -> Vec<ImageSegmentIterator> {
     let mut segments = Vec::new();
     for row_segment_number in 0..(input.height() / segment_size) {
         for column_segment_number in 0..(input.width() / segment_size) {

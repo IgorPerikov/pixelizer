@@ -2,7 +2,6 @@ use crate::segments::{split_image_by_segments, ImageSegmentIterator};
 use crate::validation::{validate, ValidationError};
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 use itertools::Itertools;
-use rayon::prelude::IntoParallelRefIterator;
 
 mod segments;
 mod validation;
